@@ -10,11 +10,16 @@ from tests.RelaxationTestCase import RelaxationTestCase, sample_intervals
 class TestIntervalMultiplication(RelaxationTestCase):
 
     @parameterized.expand([
-        [Interval(0, 0), Interval(0, 0), Interval(0, 0)],
-        [Interval(1, 1), Interval(1, 1), Interval(1, 1)],
-        [Interval(-1, -1), Interval(-2, -2), Interval(2, 2)],
-        [Interval(-2, 2), Interval(-2, 2), Interval(-4, 4)],
-        [Interval(-2, 5), Interval(1, 2), Interval(-4, 10)],
+        [Interval(0, 0), Interval(0, 0),
+         Interval(0, 0)],
+        [Interval(1, 1), Interval(1, 1),
+         Interval(1, 1)],
+        [Interval(-1, -1), Interval(-2, -2),
+         Interval(2, 2)],
+        [Interval(-2, 2), Interval(-2, 2),
+         Interval(-4, 4)],
+        [Interval(-2, 5), Interval(1, 2),
+         Interval(-4, 10)],
     ])
     def test_float_intervals(self, a, b, expected):
         self.assertEqual(expected, a * b)
@@ -35,14 +40,15 @@ class TestIntervalMultiplication(RelaxationTestCase):
         self.assertEqual(expected, a * b)
         self.assertEqual(expected, b * a)
 
-    @parameterized.expand(zip(np.random.uniform(-100, 100, (100, 100)), sample_intervals()))
+    @parameterized.expand(
+        zip(np.random.uniform(-100, 100, (100, 100)), sample_intervals()))
     def test_with_constant_ndarray(self, a, b):
         self.assertSound(a * b, [b], lambda b: a * b)
         self.assertSound(b * a, [b], lambda b: a * b)
 
     def test_broadcast_addition(self):
-        a = Interval(-1., 1.)
-        b = np.random.uniform(-100, 100, (100,))
+        a = Interval(-1.0, 1.0)
+        b = np.random.uniform(-100, 100, (100, ))
 
         self.assertAlmostEqualNumpy(np.minimum(-b, b), (a * b).lower_bound)
         self.assertAlmostEqualNumpy(np.maximum(-b, b), (a * b).upper_bound)
@@ -51,5 +57,5 @@ class TestIntervalMultiplication(RelaxationTestCase):
         self.assertAlmostEqualNumpy(np.maximum(-b, b), (b * a).upper_bound)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

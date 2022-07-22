@@ -7,7 +7,9 @@ from relaxations.interval import Interval
 from relaxations.linear_bounds import LinearBounds
 
 
-def load_spec(spec_dir: Path, counter: int) -> List[Tuple[List[Interval], Interval, LinearBounds]]:
+def load_spec(
+        spec_dir: Path,
+        counter: int) -> List[Tuple[List[Interval], Interval, LinearBounds]]:
     parameters = list()
     interval_bounds = list()
     lower_biases = list()
@@ -15,7 +17,7 @@ def load_spec(spec_dir: Path, counter: int) -> List[Tuple[List[Interval], Interv
     lower_weights = list()
     upper_weights = list()
 
-    with (spec_dir / f'{counter}.csv').open('r') as f:
+    with (spec_dir / f"{counter}.csv").open("r") as f:
         split_parameters = list()
         split_interval_bounds = list()
         split_lower_biases = list()
@@ -24,17 +26,17 @@ def load_spec(spec_dir: Path, counter: int) -> List[Tuple[List[Interval], Interv
         split_upper_weights = list()
 
         for line in f.readlines():
-            if '|' in line:
-                lower, upper = line.strip().split(' | ')
-                lower = [float(v) for v in lower.split(' ')]
-                upper = [float(v) for v in upper.split(' ')]
+            if "|" in line:
+                lower, upper = line.strip().split(" | ")
+                lower = [float(v) for v in lower.split(" ")]
+                upper = [float(v) for v in upper.split(" ")]
 
                 split_lower_biases.append(lower[0])
                 split_upper_biases.append(upper[0])
                 split_lower_weights.append(lower[1:])
                 split_upper_weights.append(upper[1:])
 
-            elif 'SPEC_FINISHED' in line:
+            elif "SPEC_FINISHED" in line:
                 parameters.append(np.asarray(split_parameters))
                 interval_bounds.append(np.asarray(split_interval_bounds))
                 lower_biases.append(np.asarray(split_lower_biases))
@@ -49,11 +51,12 @@ def load_spec(spec_dir: Path, counter: int) -> List[Tuple[List[Interval], Interv
                 split_lower_weights = list()
                 split_upper_weights = list()
 
-            elif line.startswith('('):
+            elif line.startswith("("):
                 split_interval_bounds.extend(eval(line))
 
             else:
-                split_parameters.append([float(v) for v in line.strip().split(' ')])
+                split_parameters.append(
+                    [float(v) for v in line.strip().split(" ")])
 
     parameters = np.array(parameters)
     interval_bounds = np.asarray(interval_bounds)
@@ -67,16 +70,14 @@ def load_spec(spec_dir: Path, counter: int) -> List[Tuple[List[Interval], Interv
     for i in range(len(parameters)):
         params = [Interval(param[0], param[1]) for param in parameters[i]]
 
-        bounds = Interval(
-            lower_bound=interval_bounds[i][:, 0],
-            upper_bound=interval_bounds[i][:, 1]
-        )
+        bounds = Interval(lower_bound=interval_bounds[i][:, 0],
+                          upper_bound=interval_bounds[i][:, 1])
 
         constraints = LinearBounds(
             upper_slope=upper_weights[i],
             upper_offset=upper_biases[i],
             lower_slope=lower_weights[i],
-            lower_offset=lower_biases[i]
+            lower_offset=lower_biases[i],
         )
         result.append((params, bounds, constraints))
 
