@@ -31,7 +31,9 @@ def mean_point_iou(prediction, actual):
 def logits_to_category(logits, expected):
     logits = logits.copy()
     valid_categories = np.unique(expected)
-    invalid_categories = list(set(np.arange(logits.shape[0])).difference(set(valid_categories)))
-    logits[invalid_categories, :] = np.min(logits) - 1000  # manually deactivate irrelevant logits
+    invalid_categories = list(
+        set(np.arange(logits.shape[0])).difference(set(valid_categories)))
+    logits[invalid_categories, :] = (np.min(logits) - 1000
+                                     )  # manually deactivate irrelevant logits
     prediction = np.argmax(logits, axis=0)
     return prediction

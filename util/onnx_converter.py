@@ -9,7 +9,7 @@ def __export(model: nn.Module, num_points: int, file):
     dummy_batch_size = 1
     input_features = 3
     dummy_input = torch.randn(dummy_batch_size, input_features, num_points)
-    torch.onnx.export(model, (dummy_input,), file, verbose=False)
+    torch.onnx.export(model, (dummy_input, ), file, verbose=False)
 
 
 def convert(model: nn.Module, num_points: int, file):
