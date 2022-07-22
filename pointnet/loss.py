@@ -12,5 +12,8 @@ def orthogonal_normalizer(matrix):
 
     # p='fro' (Frobenius-Norm) is broken on Cuda in torch 1.4.0. According to the discussion in the bug report,
     # p=2 has the same effect and works on Cuda https://github.com/pytorch/pytorch/issues/30704
-    loss = torch.mean(torch.norm(torch.bmm(matrix.transpose(2, 1), matrix) - identity, p=2, dim=(1, 2)))
+    loss = torch.mean(
+        torch.norm(torch.bmm(matrix.transpose(2, 1), matrix) - identity,
+                   p=2,
+                   dim=(1, 2)))
     return loss

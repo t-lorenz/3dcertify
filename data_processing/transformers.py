@@ -13,15 +13,15 @@ class HDF5Loader(Dataset):
     # source: https://shapenet.cs.stanford.edu/media/modelnet40_ply_hdf5_2048.zip
     def __init__(self, data_dir, train=True, num_points=1024, transform=None):
         train_files = [
-            'ply_data_train0.h5',
-            'ply_data_train1.h5',
-            'ply_data_train2.h5',
-            'ply_data_train3.h5',
-            'ply_data_train4.h5',
+            "ply_data_train0.h5",
+            "ply_data_train1.h5",
+            "ply_data_train2.h5",
+            "ply_data_train3.h5",
+            "ply_data_train4.h5",
         ]
         test_files = [
-            'ply_data_test0.h5',
-            'ply_data_test1.h5',
+            "ply_data_test0.h5",
+            "ply_data_test1.h5",
         ]
 
         data = []
@@ -29,12 +29,12 @@ class HDF5Loader(Dataset):
         files = train_files if train else test_files
         for file in files:
             path = os.path.join(data_dir, file)
-            h5file = h5py.File(path, mode='r')
-            data.append(h5file['data'])
-            labels.append(h5file['label'])
+            h5file = h5py.File(path, mode="r")
+            data.append(h5file["data"])
+            labels.append(h5file["label"])
         self.data = np.concatenate(data, axis=0)[:, 0:num_points]
         self.data = np.swapaxes(self.data, 1, 2)
-        self.labels = np.concatenate(labels, axis=0).astype('long')
+        self.labels = np.concatenate(labels, axis=0).astype("long")
         self.transform = transform
         self.num_classes = np.max(self.labels) + 1
 
@@ -60,10 +60,14 @@ class HDF5Loader(Dataset):
 class ConvertFromGeometric(object):
 
     def __call__(self, data):
-        return data.pos.numpy(), None if data.face is None else data.face.numpy(), data.y.numpy()
+        return (
+            data.pos.numpy(),
+            None if data.face is None else data.face.numpy(),
+            data.y.numpy(),
+        )
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + "()"
 
 
 class NormalizeUnitSphere(object):
@@ -88,7 +92,7 @@ class NormalizeUnitSphere(object):
         return points, faces, label
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + "()"
 
 
 class SelectPoints(object):
@@ -98,11 +102,16 @@ class SelectPoints(object):
 
     def __call__(self, data):
         points, faces, label = data
-        assert points.shape[0] >= self.num_points, "Cannot select more points than given in input data"
-        return points[:self.num_points], None if faces is None else faces[:self.num_points], label[:self.num_points]
+        assert (points.shape[0] >= self.num_points
+                ), "Cannot select more points than given in input data"
+        return (
+            points[:self.num_points],
+            None if faces is None else faces[:self.num_points],
+            label[:self.num_points],
+        )
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + "()"
 
 
 class RandomRotateZ(object):
@@ -116,7 +125,7 @@ class RandomRotateZ(object):
         return points, faces, label
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + "()"
 
 
 class RandomRotateSO3(object):
@@ -130,7 +139,7 @@ class RandomRotateSO3(object):
         return points, faces, label
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + "()"
 
 
 class Identity(object):
@@ -139,7 +148,7 @@ class Identity(object):
         return data
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + "()"
 
 
 class GaussianNoise(object):
@@ -150,7 +159,7 @@ class GaussianNoise(object):
         return points, faces, label
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + "()"
 
 
 class RemoveNones(object):
@@ -163,7 +172,7 @@ class RemoveNones(object):
             return points, faces, label
 
     def __repr__(self):
-        return self.__class__.__name__ + '()'
+        return self.__class__.__name__ + "()"
 
 
 class FarthestPoints(object):
@@ -182,7 +191,8 @@ class FarthestPoints(object):
     # update distance matrix and select the farthest point from set S after a new point is selected
     def update_farthest_distance(self, far_mat, dist_mat, s):
         for i in range(far_mat.shape[0]):
-            far_mat[i] = dist_mat[i, s] if far_mat[i] > dist_mat[i, s] else far_mat[i]
+            far_mat[i] = dist_mat[
+                i, s] if far_mat[i] > dist_mat[i, s] else far_mat[i]
         return far_mat, np.argmax(far_mat)
 
     # initialize matrix to keep track of distance from set s
@@ -206,7 +216,8 @@ class FarthestPoints(object):
         selected_faces = []
         selected_y = []
         s = np.random.randint(pos.shape[0])
-        far_mat = self.init_farthest_distance(np.zeros((pos.shape[0])), distance_matrix, s)
+        far_mat = self.init_farthest_distance(np.zeros((pos.shape[0])),
+                                              distance_matrix, s)
 
         for i in range(self.num_points):
             selected_points.append(pos[s])
@@ -214,7 +225,8 @@ class FarthestPoints(object):
                 selected_faces.append(data.face[s])
             if y is not None:
                 selected_y.append(y[s])
-            far_mat, s = self.update_farthest_distance(far_mat, distance_matrix, s)
+            far_mat, s = self.update_farthest_distance(far_mat,
+                                                       distance_matrix, s)
 
         selected_points = torch.from_numpy(np.array(selected_points))
         data.pos = selected_points
@@ -227,7 +239,7 @@ class FarthestPoints(object):
         return data
 
     def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, self.num_points)
+        return "{}({})".format(self.__class__.__name__, self.num_points)
 
 
 # Adapted from torch geometric to preserve face information
@@ -285,7 +297,7 @@ class SamplePoints(object):
         return data
 
     def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, self.num)
+        return "{}({})".format(self.__class__.__name__, self.num)
 
 
 class TestDummy(object):
@@ -295,4 +307,4 @@ class TestDummy(object):
         assert False
 
     def __repr__(self):
-        return '{}()'.format(self.__class__.__name__)
+        return "{}()".format(self.__class__.__name__)

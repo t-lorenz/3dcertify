@@ -7,7 +7,7 @@ from util.math import set_random_seed
 
 
 class Experiment:
-    __OUTPUT_PATH = 'out/certification'
+    __OUTPUT_PATH = "out/certification"
 
     def __init__(self, settings: Namespace):
         self.settings = settings
@@ -25,14 +25,14 @@ class Experiment:
         return experiment_dir
 
     def load_checkpoints(self) -> dict:
-        checkpoint_file = self.experiment_directory / 'certification_checkpoints.json'
+        checkpoint_file = self.experiment_directory / "certification_checkpoints.json"
         if checkpoint_file.is_file():
-            with checkpoint_file.open('r') as json_file:
+            with checkpoint_file.open("r") as json_file:
                 return json.load(json_file)
         else:
             return {}
 
     def store_checkpoints(self, checkpoints: dict):
-        checkpoint_file = self.experiment_directory / 'certification_checkpoints.json'
-        with checkpoint_file.open('w') as json_file:
+        checkpoint_file = self.experiment_directory / "certification_checkpoints.json"
+        with checkpoint_file.open("w") as json_file:
             json.dump(checkpoints, json_file, indent=4, sort_keys=True)
