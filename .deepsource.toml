@@ -1,5 +1,11 @@
 version = 1
 
+exclude_patterns = [
+  "ERAN/**",
+  "auto_LiRPA/**",
+  "deepg3d/**"
+]
+
 [[analyzers]]
 name = "python"
 enabled = true
