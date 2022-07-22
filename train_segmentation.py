@@ -13,30 +13,84 @@ from data_processing import datasets
 from pointnet import attacks
 from pointnet.segmentation_model import PointNetSegmentation
 from util import logging
-from util.math import set_random_seed, logits_to_category, mean_point_iou, DEFAULT_SEED
+from util.math import DEFAULT_SEED, logits_to_category, mean_point_iou, set_random_seed
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--out', type=str, required=True, help='path of output directory')
-parser.add_argument('--dataset', type=str, default='shapenet', help='the dataset to use', choices=['shapenet'])
-parser.add_argument('--batch_size', type=int, default=32, help='mini-batch size')
-parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train for')
-parser.add_argument('--num_points', type=int, default=1024, help='number of points per point cloud')
-parser.add_argument('--seed', type=int, default=DEFAULT_SEED, help='seed for random number generator')
-parser.add_argument('--ignore_existing_output_dir', action='store_true', help='ignore if output dir exists')
-parser.add_argument('--num_workers', type=int, default=4, help='number of parallel data loader workers')
-parser.add_argument('--defense', action='store_true', help='use adversarial training')
-parser.add_argument('--eps', type=float, default=0.02, help='radius of eps-box to defend around point')
-parser.add_argument('--step_size', type=float, default=None, help='step size for FGSM')
-parser.add_argument('--lr', type=float, default=0.001, help='optimizer learning rate')
-parser.add_argument('--max_features', type=int, default=1024, help='the number of features for max pooling')
-parser.add_argument('--pooling', choices=['max', 'avg', 'sum'], default='max', help='global pooling function')
-parser.add_argument('--rotation', choices=['none', 'z', 'so3'], default='z', help='Axis for rotation augmentation')
+parser.add_argument("--out",
+                    type=str,
+                    required=True,
+                    help="path of output directory")
+parser.add_argument(
+    "--dataset",
+    type=str,
+    default="shapenet",
+    help="the dataset to use",
+    choices=["shapenet"],
+)
+parser.add_argument("--batch_size",
+                    type=int,
+                    default=32,
+                    help="mini-batch size")
+parser.add_argument("--epochs",
+                    type=int,
+                    default=200,
+                    help="number of epochs to train for")
+parser.add_argument("--num_points",
+                    type=int,
+                    default=1024,
+                    help="number of points per point cloud")
+parser.add_argument("--seed",
+                    type=int,
+                    default=DEFAULT_SEED,
+                    help="seed for random number generator")
+parser.add_argument(
+    "--ignore_existing_output_dir",
+    action="store_true",
+    help="ignore if output dir exists",
+)
+parser.add_argument("--num_workers",
+                    type=int,
+                    default=4,
+                    help="number of parallel data loader workers")
+parser.add_argument("--defense",
+                    action="store_true",
+                    help="use adversarial training")
+parser.add_argument("--eps",
+                    type=float,
+                    default=0.02,
+                    help="radius of eps-box to defend around point")
+parser.add_argument("--step_size",
+                    type=float,
+                    default=None,
+                    help="step size for FGSM")
+parser.add_argument("--lr",
+                    type=float,
+                    default=0.001,
+                    help="optimizer learning rate")
+parser.add_argument(
+    "--max_features",
+    type=int,
+    default=1024,
+    help="the number of features for max pooling",
+)
+parser.add_argument(
+    "--pooling",
+    choices=["max", "avg", "sum"],
+    default="max",
+    help="global pooling function",
+)
+parser.add_argument(
+    "--rotation",
+    choices=["none", "z", "so3"],
+    default="z",
+    help="Axis for rotation augmentation",
+)
 
 settings = parser.parse_args()
 
-settings.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-settings.out = os.path.join('out', settings.out)
-settings.dataset = os.path.join('data', settings.dataset)
+settings.device = "cuda" if torch.cuda.is_available() else "cpu"
+settings.out = os.path.join("out", settings.out)
+settings.dataset = os.path.join("data", settings.dataset)
 if not settings.step_size:
     settings.step_size = 1.25 * settings.eps
 
@@ -51,20 +105,24 @@ writer = SummaryWriter(log_dir=settings.out)
 
 set_random_seed(settings.seed)
 
-train_data = datasets.shapenet(num_points=settings.num_points, split='train', rotate=settings.rotation)
-test_data = datasets.shapenet(num_points=settings.num_points, split='test', rotate='none')
+train_data = datasets.shapenet(num_points=settings.num_points,
+                               split="train",
+                               rotate=settings.rotation)
+test_data = datasets.shapenet(num_points=settings.num_points,
+                              split="test",
+                              rotate="none")
 
 train_loader = DataLoader(
     dataset=train_data,
     batch_size=settings.batch_size,
     shuffle=True,
-    num_workers=settings.num_workers
+    num_workers=settings.num_workers,
 )
 test_loader = DataLoader(
     dataset=test_data,
     batch_size=settings.batch_size,
     shuffle=False,
-    num_workers=settings.num_workers
+    num_workers=settings.num_workers,
 )
 
 print("Train Size: ", len(train_data))
@@ -77,10 +135,8 @@ logger.info("Number of classes: %d", train_data.num_classes)
 logger.info("Training set size: %d", len(train_data))
 logger.info("Test set size: %d", len(test_data))
 
-model = PointNetSegmentation(
-    number_points=settings.num_points,
-    num_seg_classes=50
-)
+model = PointNetSegmentation(number_points=settings.num_points,
+                             num_seg_classes=50)
 print(model)
 
 model = model.to(settings.device)
@@ -110,7 +166,10 @@ for epoch in range(settings.epochs):
 
             model.eval()
             points = domain.random_point()
-            points = attacks.fgsm(model, points, label, step_size=settings.step_size)
+            points = attacks.fgsm(model,
+                                  points,
+                                  label,
+                                  step_size=settings.step_size)
             points = domain.project(points)
 
         model.train()
@@ -153,20 +212,20 @@ for epoch in range(settings.epochs):
             test_amount += 1
 
     logger.info(
-        "Epoch {epoch}: train loss: {train_loss}, train accuracy: {train_accuracy}, test loss: {test_loss}, test accuracy: {test_accuracy}, test iou {test_iou}".format(
+        "Epoch {epoch}: train loss: {train_loss}, train accuracy: {train_accuracy}, test loss: {test_loss}, test accuracy: {test_accuracy}, test iou {test_iou}"
+        .format(
             epoch=epoch,
             train_loss=train_loss,
             train_accuracy=train_correct / train_amount,
             test_loss=test_loss,
             test_accuracy=test_correct / test_amount,
             test_iou=test_iou / test_amount,
-        )
-    )
+        ))
 
-    writer.add_scalar('accuracy/train', train_correct / train_amount, epoch)
-    writer.add_scalar('loss/train', train_loss / train_amount, epoch)
-    writer.add_scalar('accuracy/test', test_correct / test_amount, epoch)
-    writer.add_scalar('loss/test', test_loss / test_amount, epoch)
+    writer.add_scalar("accuracy/train", train_correct / train_amount, epoch)
+    writer.add_scalar("loss/train", train_loss / train_amount, epoch)
+    writer.add_scalar("accuracy/test", test_correct / test_amount, epoch)
+    writer.add_scalar("loss/test", test_loss / test_amount, epoch)
 
     scheduler.step()
 

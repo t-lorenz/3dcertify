@@ -9,7 +9,8 @@ from relaxations.linear_bounds import LinearBounds
 from transformations.transformation import Transformation
 
 
-def encode(transformation: Transformation, points: np.ndarray, params: List[Interval]) -> LinearBounds:
+def encode(transformation: Transformation, points: np.ndarray,
+           params: List[Interval]) -> LinearBounds:
     center = [p.center() for p in params]
     zero_order_term = transformation.transform(points, center)
     gradients = transformation.gradient_params(points, center)
@@ -21,8 +22,10 @@ def encode(transformation: Transformation, points: np.ndarray, params: List[Inte
 
     second_order_bounds = 0.0
     for i, j in itertools.product(range(len(params)), range(len(params))):
-        factor = iv.square(params[i] - center[i]) if i == j else (params[i] - center[i]) * (params[j] - center[j])
-        second_order_bounds = second_order_bounds + (0.5 * hessian[i][j] * factor)
+        factor = (iv.square(params[i] - center[i]) if i == j else
+                  (params[i] - center[i]) * (params[j] - center[j]))
+        second_order_bounds = second_order_bounds + (0.5 * hessian[i][j] *
+                                                     factor)
 
     return LinearBounds(
         upper_slope=np.stack(gradients, axis=2),

@@ -25,8 +25,9 @@ class SemanticTransformation(Perturbation):
         ub = np.reshape(interval_bounds.upper_bound, original_shape)
         lb = torch.tensor(lb, device=x.device)
         ub = torch.tensor(ub, device=x.device)
-        assert x.size() == lb.size() and x.size() == ub.size(), \
-            f"bounds must have the same shape as x. Got x:{x.size()}, lb:{lb.size()}, ub:{ub.size()}"
+        assert (
+            x.size() == lb.size() and x.size() == ub.size()
+        ), f"bounds must have the same shape as x. Got x:{x.size()}, lb:{lb.size()}, ub:{ub.size()}"
         return LinearBound(None, None, None, None, lb, ub), x, None
 
     """Given an variable x and its bound matrix A, compute worst case bound according to semantic transformation."""
@@ -45,24 +46,42 @@ class SemanticTransformation(Perturbation):
         x_np = np.reshape(x_np, (n_batch * n_points, n_coords))
         bounds = taylor.encode(self.transformation, x_np, self.params)
 
-        lower_offset = torch.tensor(bounds.lower_offset.reshape((n_batch, n_values, 1)), device=x.device)
-        upper_offset = torch.tensor(bounds.upper_offset.reshape((n_batch, n_values, 1)), device=x.device)
-        lower_slope = torch.tensor(bounds.lower_slope.reshape((n_batch, n_values, n_params)), device=x.device)
-        upper_slope = torch.tensor(bounds.upper_slope.reshape((n_batch, n_values, n_params)), device=x.device)
+        lower_offset = torch.tensor(bounds.lower_offset.reshape(
+            (n_batch, n_values, 1)),
+            device=x.device)
+        upper_offset = torch.tensor(bounds.upper_offset.reshape(
+            (n_batch, n_values, 1)),
+            device=x.device)
+        lower_slope = torch.tensor(bounds.lower_slope.reshape(
+            (n_batch, n_values, n_params)),
+            device=x.device)
+        upper_slope = torch.tensor(bounds.upper_slope.reshape(
+            (n_batch, n_values, n_params)),
+            device=x.device)
 
         # Backwards propagate coefficients through linear relaxation of transformation
         if sign == -1:  # computing lower bound
-            new_A = torch.matmul(A.clamp(min=0.0), lower_slope) + torch.matmul(A.clamp(max=0.0), upper_slope)
-            offset = torch.matmul(A.clamp(min=0.0), lower_offset) + torch.matmul(A.clamp(max=0.0), upper_offset)
+            new_A = torch.matmul(A.clamp(min=0.0), lower_slope) + torch.matmul(
+                A.clamp(max=0.0), upper_slope)
+            offset = torch.matmul(A.clamp(min=0.0),
+                                  lower_offset) + torch.matmul(
+                                      A.clamp(max=0.0), upper_offset)
         elif sign == 1:  # computing upper bound
-            new_A = torch.matmul(A.clamp(min=0.0), upper_slope) + torch.matmul(A.clamp(max=0.0), lower_slope)
-            offset = torch.matmul(A.clamp(min=0.0), upper_offset) + torch.matmul(A.clamp(max=0.0), lower_offset)
+            new_A = torch.matmul(A.clamp(min=0.0), upper_slope) + torch.matmul(
+                A.clamp(max=0.0), lower_slope)
+            offset = torch.matmul(A.clamp(min=0.0),
+                                  upper_offset) + torch.matmul(
+                                      A.clamp(max=0.0), lower_offset)
         else:
             raise RuntimeError(f"Invalid sign value: {sign}")
 
         # Instantiate bounds based on valid parameter ranges. Same implementation as for L-inf perturbation in PerturbationLpNorm
-        lb = torch.tensor([[p.lower_bound] for p in self.params], dtype=x.dtype, device=x.device).reshape((1, n_params, 1))
-        ub = torch.tensor([[p.upper_bound] for p in self.params], dtype=x.dtype, device=x.device).reshape((1, n_params, 1))
+        lb = torch.tensor([[p.lower_bound] for p in self.params],
+                          dtype=x.dtype,
+                          device=x.device).reshape((1, n_params, 1))
+        ub = torch.tensor([[p.upper_bound] for p in self.params],
+                          dtype=x.dtype,
+                          device=x.device).reshape((1, n_params, 1))
 
         center = (ub + lb) / 2.0
         diff = (ub - lb) / 2.0

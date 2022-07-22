@@ -31,7 +31,8 @@ class EpsBox(Domain):
         return self.points + box
 
 
-def project_onto_line_segment(point: torch.Tensor, a: torch.Tensor, b: torch.Tensor):
+def project_onto_line_segment(point: torch.Tensor, a: torch.Tensor,
+                              b: torch.Tensor):
     assert len(point.size()) == 2 and point.size(1) == 3
     assert len(a.size()) == 2 and point.size(1) == 3
     assert len(b.size()) == 2 and point.size(1) == 3
@@ -73,12 +74,13 @@ class FaceBox(Domain):
         # a = torch.rand((origin.size(0), origin.size(1), 1), device=origin.device)
         # b = torch.rand((origin.size(0), origin.size(1), 1), device=origin.device)
         # return origin + a * edge1 + b * edge2
-        width = (self.x_max - self.x_min)
+        width = self.x_max - self.x_min
         offset = torch.empty_like(self.x_min).uniform_() * width
         return self.x_min + offset
 
 
-def fgsm(model: nn.Module, x: torch.Tensor, target: torch.Tensor, step_size: float):
+def fgsm(model: nn.Module, x: torch.Tensor, target: torch.Tensor,
+         step_size: float):
     input_ = x.clone().detach_()
     input_.requires_grad_()
 
@@ -91,7 +93,8 @@ def fgsm(model: nn.Module, x: torch.Tensor, target: torch.Tensor, step_size: flo
     return out
 
 
-def pgd(model: nn.Module, domain: Domain, target: torch.Tensor, k: int, step_size: float):
+def pgd(model: nn.Module, domain: Domain, target: torch.Tensor, k: int,
+        step_size: float):
     # initialize with random point from attack domain
     x = domain.random_point()
 
